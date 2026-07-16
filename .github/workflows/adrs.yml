@@ -1,15 +1,38 @@
 name: ADRs
 
+# Deploys the ADR site to GitHub Pages via the Actions flow (Pages source:
+# "GitHub Actions") — build with the fuego-adr CLI, upload the artifact,
+# deploy. No serve branch involved.
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
 jobs:
-  adrs:
-    permissions: { contents: write }
-    uses: gofuego/.github/.github/workflows/fuego-adr-deploy.yml@main
-    with:
-      adr_path: adrs
-      pages_base: /demo-fuego-adr
-      adr_ref: v0.1.4
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+
+      - name: Build the ADR site
+        run: go run github.com/gofuego/fuego-adr@v0.1.4 build adrs --base-url /demo-fuego-adr -o build
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build
+      - id: deployment
+        uses: actions/deploy-pages@v4
