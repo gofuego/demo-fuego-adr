@@ -1,0 +1,15 @@
+name: ADRs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  adrs:
+    permissions: { contents: write }
+    uses: gofuego/.github/.github/workflows/fuego-adr-deploy.yml@main
+    with:
+      adr_path: adrs
+      pages_base: /demo-fuego-adr
+      adr_ref: v0.1.4
